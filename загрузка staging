@@ -1,0 +1,80 @@
+-- шаг 2.4. Загрузка данных на уровень staging 
+insert into kdz_7_staging.flights (flight_year, flight_quarter, flight_month, flight_date, reporting_airline, tail_number, flight_number, origin, destination, crs_dep_time, dep_time, dep_delay_min, cancelled, cancellation_code, air_time, distance, weather_delay) 
+ select distinct 
+  flight_year, 
+  flight_quarter, 
+  flight_month, 
+  flight_date, 
+  reporting_airline, 
+  tail_number, 
+  flight_number, 
+  origin, 
+  destination, 
+  crs_dep_time, 
+  dep_time, 
+  dep_delay_min, 
+  cancelled, 
+  cancellation_code, 
+  air_time, 
+  distance, 
+  weather_delay 
+ from kdz_7_etl.flights 
+ on conflict (flight_date, flight_number, origin, destination, crs_dep_time) do update 
+ set 
+  flight_year = excluded.flight_year, 
+  flight_quarter = excluded.flight_quarter, 
+  flight_month = excluded.flight_month, 
+  reporting_airline = excluded.reporting_airline, 
+  tail_number = excluded.tail_number, 
+  dep_time = excluded.dep_time, 
+  dep_delay_min = excluded.dep_delay_min, 
+  cancelled = excluded.cancelled, 
+  cancellation_code = excluded.cancellation_code, 
+  air_time = excluded.air_time, 
+  distance = excluded.distance, 
+  weather_delay = excluded.weather_delay, 
+  loaded_ts = now() 
+; 
+ 
+select * 
+from kdz_7_staging.flights 
+; 
+ 
+insert into kdz_7_staging.weather (icao_code, local_datetime, air_temp, p0_station_lvl, p_sea_lvl, humidity, wind_direction, wind_speed, max_gust_speed, phenomena_observed, phenomena_significant, total_cloud_cover, visibility, dewpoint_temp ) 
+ select 
+  icao_code, 
+  local_datetime, 
+  air_temp, 
+  p0_station_lvl, 
+  p_sea_lvl, 
+  humidity, 
+  wind_direction, 
+  wind_speed, 
+  max_gust_speed, 
+  phenomena_observed, 
+  phenomena_significant, 
+  total_cloud_cover, 
+  visibility, 
+  dewpoint_temp  
+ from kdz_7_etl.weather 
+ on conflict (local_datetime) do update 
+ set 
+  icao_code = excluded.icao_code, 
+  air_temp = excluded.air_temp, 
+  p0_station_lvl = excluded.p0_station_lvl, 
+  p_sea_lvl = excluded.p_sea_lvl, 
+  humidity = excluded.humidity, 
+  wind_direction = excluded.wind_direction, 
+  wind_speed = excluded.wind_speed, 
+  max_gust_speed = excluded.max_gust_speed, 
+  phenomena_observed = excluded.phenomena_observed, 
+  phenomena_significant = excluded.phenomena_significant, 
+  total_cloud_cover = excluded.total_cloud_cover, 
+  visibility = excluded.visibility, 
+  dewpoint_temp = excluded.dewpoint_temp, 
+  loaded_ts = now() 
+; 
+ 
+select * 
+from kdz_7_staging.weather 
+;
